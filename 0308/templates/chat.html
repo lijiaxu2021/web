@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}聊天{% endblock %}
+
+{% block extra_css %}
+<meta name="current-user" content="{{ current_user.username }}">
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <!-- 手机端导航栏 -->
+    <div class="mobile-nav d-md-none">
+        <button class="btn btn-link back-btn" id="backToGroups">
+            <i class="bi bi-arrow-left"></i>
+        </button>
+        <span class="current-group-name"></span>
+        <div class="nav-actions">
+            <button class="btn btn-link" id="mobileGroupSettings" data-bs-toggle="modal" data-bs-target="#groupSettingsModal">
+                <i class="bi bi-gear"></i>
+            </button>
+            <button class="btn btn-link" data-bs-toggle="modal" data-bs-target="#createGroupModal">
+                <i class="bi bi-plus-circle"></i>
+            </button>
+            <button class="btn btn-link" data-bs-toggle="modal" data-bs-target="#joinGroupModal">
+                <i class="bi bi-box-arrow-in-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 群组列表侧边栏 -->
+    <div class="sidebar d-none d-md-flex" id="sidebar">
+        <div class="sidebar-header">
+            <div class="d-flex justify-content-between align-items-center p-3">
+                <h5 class="mb-0">群聊列表</h5>
+                <div class="sidebar-actions">
+                    <button class="btn btn-link" id="currentGroupSettings" data-bs-toggle="modal" data-bs-target="#groupSettingsModal">
+                        <i class="bi bi-gear"></i>
+                    </button>
+                    <button class="btn btn-link" data-bs-toggle="modal" data-bs-target="#createGroupModal">
+                        <i class="bi bi-plus-circle"></i>
+                    </button>
+                    <button class="btn btn-link" data-bs-toggle="modal" data-bs-target="#joinGroupModal">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="group-list">
+            {% for group in groups %}
+            <div class="group-item" data-group-id="{{ group.id }}">
+                {{ group.name }}
+                <span class="member-count">({{ group.members|length }}人)</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- 手机端群组列表 -->
+    <div class="mobile-groups d-md-none">
+        <div class="group-grid">
+            {% for group in groups %}
+            <div class="group-card" data-group-id="{{ group.id }}">
+                <div class="group-card-body">
+                    <h5 class="group-name">{{ group.name }}</h5>
+                    <span class="member-count">({{ group.members|length }}人)</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- 聊天区域 -->
+    <div class="chat-area">
+        <div class="message-list" id="message-list">
+            <!-- Messages will be added here -->
+        </div>
+        <div class="input-area">
+            <div class="input-container">
+                <form id="message-form" class="message-input-form">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="message-input" placeholder="输入消息...">
+                        <button type="submit" class="btn btn-primary">发送</button>
+                    </div>
+                </form>
+                <form id="file-form" class="file-input-form">
+                    <div class="input-group">
+                        <input type="file" class="form-control" id="file-input" 
+                            accept=".txt,.pdf,.png,.jpg,.jpeg,.gif,.mp4,.mp3,.wav">
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="bi bi-paperclip"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 成员列表侧边栏 -->
+    <div class="members-sidebar d-none d-md-flex" id="members-sidebar">
+        <div class="members-header">
+            <h6 class="mb-0">群成员</h6>
+            <span class="member-count"></span>
+        </div>
+        <div class="members-list" id="members-list">
+            <!-- 成员列表将通过 JavaScript 动态添加 -->
+        </div>
+    </div>
+    
+    <!-- 成员列表切换按钮 -->
+    <button class="toggle-members-btn d-none d-md-block" id="toggle-members-btn">
+        <i class="bi bi-people-fill"></i>
+    </button>
+
+    <!-- 添加侧边栏切换按钮 -->
+    <button class="toggle-sidebar-btn d-none d-md-block" id="toggle-sidebar-btn">
+        <i class="bi bi-chevron-left"></i>
+    </button>
+
+    <!-- 电脑端任务栏 -->
+    <div class="taskbar d-none d-md-flex">
+        <div class="taskbar-item active" data-tab="groups">
+            <i class="bi bi-chat-dots"></i>
+            <span>群聊</span>
+        </div>
+        <div class="taskbar-item" data-tab="profile">
+            <i class="bi bi-person"></i>
+            <span>我的</span>
+        </div>
+        <div class="taskbar-item" data-tab="settings">
+            <i class="bi bi-gear"></i>
+            <span>设置</span>
+        </div>
+    </div>
+
+    <!-- 手机端底部任务栏 -->
+    <div class="mobile-taskbar d-md-none">
+        <div class="taskbar-item active" data-tab="groups">
+            <i class="bi bi-chat-dots"></i>
+            <span>群聊</span>
+        </div>
+        <div class="taskbar-item" data-tab="profile">
+            <i class="bi bi-person"></i>
+            <span>我的</span>
+        </div>
+        <div class="taskbar-item" data-tab="settings">
+            <i class="bi bi-gear"></i>
+            <span>设置</span>
+        </div>
+    </div>
+
+    <!-- 个人资料页面 -->
+    <div class="profile-page tab-page" style="display: none;">
+        <div class="profile-header">
+            <h4>个人资料</h4>
+        </div>
+        <div class="profile-content">
+            <form id="profile-form">
+                <div class="mb-3">
+                    <label class="form-label">用户名</label>
+                    <input type="text" class="form-control" value="{{ current_user.username }}" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">座右铭</label>
+                    <textarea class="form-control" id="profile-motto" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">联系方式</label>
+                    <input type="text" class="form-control" id="profile-contact">
+                </div>
+                <button type="submit" class="btn btn-primary">保存修改</button>
+            </form>
+            
+            <hr>
+            
+            <div class="admin-groups">
+                <h5>我管理的群聊</h5>
+                <div class="admin-groups-list">
+                    <!-- 管理的群聊将通过JavaScript动态添加 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置页面 -->
+    <div class="settings-page tab-page" id="settings">
+        <div class="settings-header">
+            <h4>设置</h4>
+        </div>
+        <div class="settings-content">
+            <form id="password-change-form" class="mb-4">
+                <h5>修改密码</h5>
+                <div class="mb-3">
+                    <label class="form-label">当前密码</label>
+                    <input type="password" class="form-control" id="current-password" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">新密码</label>
+                    <input type="password" class="form-control" id="new-password" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">确认新密码</label>
+                    <input type="password" class="form-control" id="confirm-password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">修改密码</button>
+            </form>
+            
+            <hr>
+            
+            <div class="danger-zone">
+                <h5>危险区域</h5>
+                <button type="button" class="btn btn-danger" id="delete-account">
+                    注销账户
+                </button>
+                <small class="text-muted d-block mt-2">
+                    注意：账户注销后将无法恢复，您的所有数据都将被删除。
+                </small>
+            </div>
+            
+            <div class="admin-access">
+                <h5>管理员访问</h5>
+                <button type="button" class="btn btn-primary" id="adminAccess">
+                    进入管理面板
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Group Modal -->
+<div class="modal fade" id="createGroupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">创建群聊</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="create-group-form">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="group-name" placeholder="群聊名称" required>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="password-enabled">
+                            <label class="form-check-label" for="password-enabled">启用密码保护</label>
+                        </div>
+                    </div>
+                    <div class="mb-3 password-field" style="display: none;">
+                        <input type="password" class="form-control" id="group-password" placeholder="群聊密码">
+                        <small class="text-muted">如果不设置密码，任何人都可以加入</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">创建</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Join Group Modal -->
+<div class="modal fade" id="joinGroupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">加入群聊</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="available-groups-list">
+                    <!-- Available groups will be added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加密码输入模态框 -->
+<div class="modal fade" id="passwordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">输入群聊密码</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="password-form">
+                    <input type="hidden" id="join-group-id">
+                    <div class="mb-3">
+                        <input type="password" class="form-control" id="join-password" placeholder="请输入群聊密码" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">加入</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加群聊设置模态框 -->
+<div class="modal fade" id="groupSettingsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">群聊设置</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="group-settings-form">
+                    <div class="mb-3">
+                        <label class="form-label">群聊名称</label>
+                        <input type="text" class="form-control" id="settings-group-name">
+                    </div>
+                    <div class="mb-3 admin-only" style="display: none;">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="settings-password-enabled">
+                            <label class="form-check-label" for="settings-password-enabled">启用密码保护</label>
+                        </div>
+                    </div>
+                    <div class="mb-3 password-field admin-only" style="display: none;">
+                        <label class="form-label">群聊密码</label>
+                        <input type="password" class="form-control" id="settings-group-password" placeholder="留空表示不修改">
+                    </div>
+                    <hr>
+                    <h6 class="mb-3">群成员管理</h6>
+                    <div class="member-list-container">
+                        <!-- 成员列表将通过JavaScript动态添加 -->
+                    </div>
+                    <hr>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-danger admin-only" id="clearMessages" style="display: none;">
+                            清空聊天记录
+                        </button>
+                        <button type="button" class="btn btn-danger admin-only" id="dissolveGroup" style="display: none;">
+                            解散群聊
+                        </button>
+                        <button type="button" class="btn btn-warning" id="leaveGroup">
+                            退出群聊
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary admin-only" id="saveGroupSettings" style="display: none;">保存更改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 媒体预览模态框 -->
+<div class="modal fade" id="mediaPreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">媒体预览</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="mediaPreviewContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 消息上下文菜单 -->
+<div class="message-context-menu" id="messageContextMenu">
+    <ul class="context-menu-list">
+        <li class="context-menu-item" data-action="copy">
+            <i class="bi bi-clipboard"></i> 复制消息
+        </li>
+        <li class="context-menu-item delete-option" data-action="delete">
+            <i class="bi bi-trash"></i> 删除消息
+        </li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- 添加初始化脚本 -->
+<script>
+    // 禁用任何可能的 socket.io 自动连接
+    window.io = null;
+    window.socket = null;
+    
+    // 阻止某些特定的网络请求
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options) {
+        if (url.includes('socket.io')) {
+            console.warn('Blocked socket.io request');
+            return Promise.reject(new Error('socket.io is disabled'));
+        }
+        return originalFetch.apply(this, arguments);
+    };
+</script>
+<script src="{{ url_for('static', filename='js/chat.js') }}?v={{ range(1, 1000) | random }}"></script>
+{% endblock %} 

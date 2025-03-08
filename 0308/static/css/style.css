@@ -1,0 +1,890 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #f5f5f5;
+}
+
+.chat-container {
+    height: 100vh;
+    display: flex;
+    background: white;
+}
+
+.sidebar {
+    width: 280px;
+    background: #2f2f2f;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #ddd;
+    transition: transform 0.3s ease;
+    position: fixed;
+    left: 60px;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+}
+
+.sidebar.collapsed {
+    transform: translateX(-280px);
+}
+
+.sidebar-header {
+    border-bottom: 1px solid #444;
+}
+
+.sidebar-header h5 {
+    color: white;
+}
+
+.sidebar-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.sidebar-actions .btn-link {
+    color: white;
+    padding: 8px;
+    font-size: 1.2rem;
+}
+
+.sidebar-actions .btn-link:hover {
+    color: #007bff;
+}
+
+/* 侧边栏切换按钮 */
+.toggle-sidebar-btn {
+    position: fixed;
+    left: 340px; /* 60px + 280px */
+    top: 50%;
+    transform: translateY(-50%);
+    background: #2f2f2f;
+    border: none;
+    color: white;
+    padding: 15px 5px;
+    cursor: pointer;
+    border-radius: 0 5px 5px 0;
+    transition: left 0.3s ease;
+    z-index: 1001;
+}
+
+.toggle-sidebar-btn i {
+    transition: transform 0.3s ease;
+}
+
+/* 修改折叠时的按钮位置 */
+.sidebar.collapsed ~ .toggle-sidebar-btn {
+    left: 60px;
+}
+
+/* 修改折叠时的图标方向 */
+.sidebar.collapsed ~ .toggle-sidebar-btn i {
+    transform: rotate(180deg);
+}
+
+/* 修改成员列表侧边栏样式 */
+.members-sidebar {
+    width: 240px;
+    background: white;
+    border-left: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    transition: transform 0.3s ease;
+    z-index: 1000;
+}
+
+.members-sidebar.hidden {
+    transform: translateX(240px);
+}
+
+/* 修改聊天区域样式以适应成员列表 */
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f5f5f5;
+    margin-left: 340px; /* 60px + 280px */
+    margin-right: 240px; /* 为成员列表留出空间 */
+    transition: all 0.3s ease;
+    width: calc(100% - 520px);
+    position: relative; /* 添加相对定位 */
+}
+
+/* 当成员列表隐藏时的聊天区域 */
+.chat-area.members-hidden {
+    margin-right: 0;
+    width: calc(100% - 280px);
+}
+
+/* 当左侧栏和成员列表都隐藏时的聊天区域 */
+.sidebar.collapsed ~ .chat-area.members-hidden {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+}
+
+/* 消息列表区域 */
+.message-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    padding-bottom: 140px; /* 为输入区域留出空间 */
+}
+
+/* 输入区域样式 */
+.input-area {
+    position: fixed;
+    bottom: 0;
+    left: 340px; /* 与 chat-area 的 margin-left 相同 */
+    right: 240px; /* 与 chat-area 的 margin-right 相同 */
+    background: white;
+    padding: 15px;
+    border-top: 1px solid #ddd;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.input-container {
+    max-width: 100%;
+}
+
+.message-input-form {
+    margin-bottom: 10px;
+}
+
+.file-input-form .input-group {
+    flex-wrap: nowrap;
+}
+
+/* 当成员列表隐藏时调整输入区域 */
+.chat-area.members-hidden ~ .input-area {
+    right: 0;
+}
+
+/* 当侧边栏折叠时调整输入区域 */
+.sidebar.collapsed ~ .chat-area .input-area {
+    left: 60px;
+}
+
+/* 当侧边栏和成员列表都折叠时调整输入区域 */
+.sidebar.collapsed ~ .chat-area.members-hidden .input-area {
+    left: 60px;
+    right: 0;
+}
+
+/* 移动端适配 */
+@media (max-width: 767px) {
+    .chat-area {
+        margin: 0;
+        width: 100%;
+        height: 100vh;
+        padding-bottom: 130px; /* 为输入区域和底部任务栏留出空间 */
+    }
+    
+    .input-area {
+        left: 0;
+        right: 0;
+        bottom: 60px; /* 为底部任务栏留出空间 */
+        padding: 10px;
+    }
+    
+    .message-list {
+        padding: 15px;
+        padding-bottom: 0;
+    }
+    
+    .input-container {
+        width: 100%;
+    }
+    
+    .message-input-form,
+    .file-input-form {
+        margin-bottom: 8px;
+    }
+    
+    .input-group {
+        margin-bottom: 0;
+    }
+    
+    .toggle-sidebar-btn {
+        display: none;
+    }
+}
+
+/* 群聊列表样式调整 */
+.group-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.group-item {
+    padding: 10px 15px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.group-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.group-item.active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.group-item .member-count {
+    font-size: 12px;
+    color: #aaa;
+    margin-left: 5px;
+}
+
+.message {
+    margin-bottom: 15px;
+    max-width: 70%;
+    animation: fadeIn 0.3s ease;
+}
+
+.message.sent {
+    margin-left: auto;
+}
+
+.message-content {
+    padding: 10px 15px;
+    border-radius: 4px;
+    position: relative;
+}
+
+.message.sent .message-content {
+    background: #95EC69;
+    border-radius: 15px 0 15px 15px;
+}
+
+.message.received .message-content {
+    background: white;
+    border-radius: 0 15px 15px 15px;
+}
+
+.message-content strong {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.message-content p {
+    margin: 0;
+    word-break: break-word;
+}
+
+.message-content small {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+    display: block;
+}
+
+.auth-container {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.available-group-item {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.2s;
+}
+
+.available-group-item:hover {
+    background: #f8f9fa;
+}
+
+.member-count {
+    font-size: 12px;
+    color: #999;
+    margin-left: 5px;
+}
+
+.join-group-btn {
+    min-width: 60px;
+}
+
+/* 成员列表切换按钮 */
+.toggle-members-btn {
+    position: fixed;
+    right: 240px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: white;
+    border: 1px solid #ddd;
+    border-right: none;
+    padding: 15px 5px;
+    cursor: pointer;
+    border-radius: 5px 0 0 5px;
+    transition: right 0.3s ease;
+    z-index: 999;
+}
+
+.toggle-members-btn.hidden {
+    right: 0;
+}
+
+/* 成员列表头部样式 */
+.members-header {
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.members-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.member-item {
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    transition: background-color 0.2s;
+}
+
+.member-item:hover {
+    background: #f8f9fa;
+}
+
+.member-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.member-status.online {
+    background: #28a745;
+}
+
+.member-status.offline {
+    background: #dc3545;
+}
+
+.media-preview {
+    max-width: 300px;
+    max-height: 200px;
+    border-radius: 4px;
+    margin: 5px 0;
+    object-fit: contain;
+    background: #f8f9fa;
+}
+
+.message.sent .media-preview {
+    background: #e3f2fd;
+}
+
+.message-content img.media-preview {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.message-content img.media-preview:hover {
+    transform: scale(1.05);
+}
+
+.file-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #333;
+}
+
+.file-link svg {
+    margin-right: 8px;
+}
+
+.file-link:hover {
+    background: #e9ecef;
+    text-decoration: none;
+}
+
+#file-form {
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+
+.badge {
+    font-size: 0.75em;
+    padding: 0.25em 0.5em;
+}
+
+.badge.bg-warning {
+    color: #000;
+    background-color: #ffc107;
+}
+
+.ms-2 {
+    margin-left: 0.5rem;
+}
+
+.available-group-item .badge {
+    vertical-align: middle;
+}
+
+.member-name {
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+}
+
+/* 移动端导航栏 */
+.mobile-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    z-index: 1000;
+}
+
+.mobile-nav .back-btn {
+    color: #333;
+    padding: 8px;
+    margin-right: 10px;
+}
+
+.mobile-nav .current-group-name {
+    flex: 1;
+    font-weight: 500;
+    text-align: center;
+}
+
+.mobile-nav .nav-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.mobile-nav .nav-actions .btn-link {
+    color: #333;
+    padding: 8px;
+}
+
+/* 移动端群组列表 */
+.mobile-groups {
+    padding: 60px 15px 15px;
+    background: #f5f5f5;
+    min-height: 100vh;
+}
+
+.group-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.group-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.group-card:hover {
+    transform: translateY(-2px);
+}
+
+.group-card-body {
+    padding: 15px;
+    text-align: center;
+}
+
+.group-card .group-name {
+    margin: 0 0 5px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.group-card .member-count {
+    font-size: 12px;
+    color: #666;
+}
+
+/* 响应式调整 */
+@media (max-width: 767px) {
+    .chat-container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        position: static;
+        transform: none;
+    }
+    
+    .chat-area {
+        margin-left: 0;
+        width: 100%;
+        margin-top: 50px;
+        margin-right: 0;
+    }
+    
+    .message-list {
+        height: calc(100vh - 180px);
+    }
+    
+    .input-area {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 10px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .toggle-sidebar-btn {
+        display: none;
+    }
+    
+    .members-sidebar {
+        display: none;
+    }
+    
+    .toggle-members-btn {
+        display: none;
+    }
+}
+
+/* 群聊设置样式 */
+.member-list-container {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.member-item-settings {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.member-item-settings:last-child {
+    border-bottom: none;
+}
+
+.member-info-settings {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.member-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.member-status-dot.online {
+    background-color: #28a745;
+}
+
+.member-status-dot.offline {
+    background-color: #dc3545;
+}
+
+.remove-member-btn {
+    color: #dc3545;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.remove-member-btn:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* 移动端适配 */
+@media (max-width: 767px) {
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .member-list-container {
+        max-height: 50vh;
+    }
+}
+
+/* 管理员标签样式 */
+.admin-badge {
+    background-color: #dc3545;
+    color: white;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 5px;
+    font-weight: normal;
+}
+
+/* 成员列表中的管理员标识 */
+.member-item-settings .admin-badge {
+    margin-left: 8px;
+}
+
+/* 密码开关样式 */
+.form-switch {
+    padding-left: 2.5em;
+}
+
+.form-switch .form-check-input {
+    width: 2em;
+}
+
+/* 解散群聊按钮样式 */
+#dissolveGroup {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    margin-top: 10px;
+}
+
+#dissolveGroup:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+/* 添加警告图标 */
+#dissolveGroup::before {
+    content: "⚠️";
+    margin-right: 8px;
+}
+
+/* 任务栏样式 */
+.taskbar {
+    width: 60px;
+    background: #1a1a1a;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+    z-index: 1100;
+}
+
+.mobile-taskbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #1a1a1a;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    z-index: 1100;
+}
+
+.taskbar-item {
+    color: #888;
+    text-align: center;
+    cursor: pointer;
+    padding: 15px 0;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.taskbar .taskbar-item {
+    margin-bottom: 10px;
+}
+
+.taskbar-item i {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.taskbar-item span {
+    font-size: 12px;
+}
+
+.taskbar-item.active {
+    color: #007bff;
+}
+
+.taskbar-item:hover {
+    color: #fff;
+}
+
+/* 页面样式 */
+.tab-page {
+    position: fixed;
+    left: 60px;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    background: white;
+    border-right: 1px solid #ddd;
+    overflow-y: auto;
+    z-index: 1050;
+}
+
+.profile-header,
+.settings-header {
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.profile-content,
+.settings-content {
+    padding: 20px;
+}
+
+.admin-groups {
+    margin-top: 30px;
+}
+
+.admin-groups-list {
+    margin-top: 15px;
+}
+
+.admin-group-item {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.danger-zone {
+    padding: 20px;
+    background: #fff5f5;
+    border-radius: 4px;
+    margin-top: 30px;
+}
+
+/* 移动端适配 */
+@media (max-width: 767px) {
+    .chat-area {
+        margin-left: 0;
+        margin-bottom: 60px; /* 为底部任务栏留出空间 */
+    }
+    
+    .tab-page {
+        left: 0;
+        width: 100%;
+    }
+    
+    .mobile-taskbar {
+        height: 60px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+}
+
+/* 媒体预览样式 */
+#mediaPreviewContent {
+    max-width: 100%;
+    max-height: 80vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#mediaPreviewContent img,
+#mediaPreviewContent video {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+}
+
+#mediaPreviewContent audio {
+    width: 100%;
+}
+
+/* 上下文菜单样式 */
+.message-context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: none;
+    z-index: 1200;
+}
+
+.context-menu-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.context-menu-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.context-menu-item:hover {
+    background-color: #f8f9fa;
+}
+
+.context-menu-item i {
+    font-size: 14px;
+}
+
+.delete-option {
+    color: #dc3545;
+}
+
+/* 可删除消息的样式 */
+.message.deletable {
+    position: relative;
+}
+
+.message.deletable::after {
+    content: "可删除";
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 10px;
+    color: #dc3545;
+    opacity: 0.6;
+}
+
+/* 移动端长按效果 */
+@media (max-width: 767px) {
+    .message {
+        touch-action: none; /* 禁用默认触摸行为 */
+    }
+    
+    .message.press-active {
+        background-color: rgba(0,0,0,0.05);
+    }
+} 

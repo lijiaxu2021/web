@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}登录{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <h2 class="text-center mb-4">登录</h2>
+    <form method="post">
+        <div class="mb-3">
+            <input type="text" class="form-control" name="username" placeholder="用户名" required>
+        </div>
+        <div class="mb-3">
+            <input type="password" class="form-control" name="password" placeholder="密码" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">登录</button>
+    </form>
+    <p class="text-center mt-3">
+        还没有账号？<a href="{{ url_for('register') }}">立即注册</a>
+    </p>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-danger mt-3">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+{% endblock %} 
